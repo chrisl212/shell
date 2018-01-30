@@ -33,7 +33,16 @@ int Save_From_Array(char *filename, long *array, int size) {
 }
 
 void Shell_Sort_Array(long *array, int size, double *n_cmp) {
-
+	for (int gap = 1; gap < size; gap=(gap*3)+1) {
+		for (int i = gap; i < size; i++) {
+			int temp = array[i];
+			int j;
+			for (j = i; j >= gap && array[j-gap] > temp; j -= gap, (*n_cmp)++) {
+				array[j] = array[j-gap];
+			}
+			array[j] = temp;
+		}
+	}
 }
 
 Node *_node_create(long val) {
