@@ -27,7 +27,9 @@ int Save_From_Array(char *filename, long *array, int size) {
 	}
 
 	int bytes = fwrite(array, sizeof(*array), size, f);
-	return bytes/sizeof(*array);
+	
+	fclose(f);
+	return bytes;
 }
 
 void Shell_Sort_Array(long *array, int size, double *n_cmp) {
@@ -35,7 +37,7 @@ void Shell_Sort_Array(long *array, int size, double *n_cmp) {
 }
 
 Node *_node_create(long val) {
-	Node *node = malloc(sizeof(*node));
+	Node *node = calloc(1, sizeof(*node));
 	node->value = val;
 	return node;
 }
@@ -51,24 +53,39 @@ Node *Load_Into_List(char *filename) {
 	fseek(f, 0, SEEK_SET);
 
 	long size = fsize/sizeof(fsize);
-	long *array = malloc(size);
+	long *array = malloc(size*sizeof(*array));
 	fread(array, sizeof(*array), size, f);
 
 	Node *root = _node_create(0);
 	Node *temp = root;
 	for (int i = 0; i < size; i++) {
-		if (!temp) {
-			temp = _node_create(array[i]);
+		if (i == 0) {
+			root->value = array[i];
+		} else {
+			temp->next = _node_create(array[i]);
+			temp = temp->next;
 		}
-		temp = temp->next;
 	}
 
-
+	free(array);
+	fclose(f);
 	return root;
 }
 
 int Save_From_List(char *filename, Node *list) {
+	FILE *f = fopen(filename, "w");
+	if (!f) {
+		return -1;
+	}
 
+	int bytes = 0;
+	while (list) {
+		bytes += fwrite(&(list->value), sizeof(long), 1, f);
+		list = list->next;
+	}
+
+	fclose(f);
+	return bytes;
 }
 
 void Shell_Sort_List(Node *list, double *n_cmp) {
