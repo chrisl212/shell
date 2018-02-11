@@ -33,13 +33,19 @@ int Save_From_Array(char *filename, long *array, int size) {
 }
 
 void Shell_Sort_Array(long *array, int size, double *n_cmp) {
-	for (int gap = 1; gap < size; gap=(gap*3)+1) {
+	int max = 1;
+	while (max*3+1 < size) {
+		max = max*3+1;
+	}
+	for (int gap = max; gap > 0; gap=(gap-1)/3) {
 		for (int i = gap; i < size; i++) {
 			int temp = array[i];
-			int j;
-			for (j = i; j >= gap && array[j-gap] > temp; j -= gap, (*n_cmp)++) {
-				array[j] = array[j-gap];
+
+			int j;            
+			for (j = i; j >= gap && array[j - gap] > temp; j -= gap, (*n_cmp)++) {
+				array[j] = array[j - gap];
 			}
+
 			array[j] = temp;
 		}
 	}
@@ -65,15 +71,11 @@ Node *Load_Into_List(char *filename) {
 	long *array = malloc(size*sizeof(*array));
 	fread(array, sizeof(*array), size, f);
 
-	Node *root = _node_create(0);
+	Node *root = _node_create(size);
 	Node *temp = root;
 	for (int i = 0; i < size; i++) {
-		if (i == 0) {
-			root->value = array[i];
-		} else {
-			temp->next = _node_create(array[i]);
-			temp = temp->next;
-		}
+		temp->next = _node_create(array[i]);
+		temp = temp->next;
 	}
 
 	free(array);
@@ -88,6 +90,7 @@ int Save_From_List(char *filename, Node *list) {
 	}
 
 	int bytes = 0;
+	list=list->next;
 	while (list) {
 		bytes += fwrite(&(list->value), sizeof(long), 1, f);
 		list = list->next;
@@ -96,8 +99,52 @@ int Save_From_List(char *filename, Node *list) {
 	fclose(f);
 	return bytes;
 }
+/*
+void _swap(Node **arr, Node *n1, Node *n2) {
+	if (i > 0) {	
+		->next = arr[j];
+	}
+	if (j > 0) {
+		arr[j-1]->next = arr[i];
+	}
+	Node *temp = arr[j]->next;
+	arr[j]->next = arr[i]->next;
+	arr[i]->next = temp;
+}*/
 
 void Shell_Sort_List(Node *list, double *n_cmp) {
+	int max = 1;
+	int size = list->value;
+	Node *n = list->next;
+	Node **array = malloc(size*sizeof(*array));
+	for (int i = 0; n != NULL; i++, n=n->next) {
+		array[i] = n;
+	}
 
+	while (max*3+1 < size) {
+		max = max*3+1;
+	}
+	for (int gap = max; gap > 0; gap=(gap-1)/3) {
+		for (int i = gap; i < size; i++) {
+			Node *temp = array[i];
+
+			int j;            
+			for (j = i; j >= gap && array[j - gap]->value > temp->value; j -= gap, (*n_cmp)++) {
+				array[j] = array[j - gap];
+			}
+
+			array[j] = temp;
+		}
+	}
+	for (int i = 0; i < size; i++) {
+		if (i+1 == size) {
+			array[i]->next = NULL;
+			continue;
+		}
+		array[i]->next = array[i+1];
+	}
+	list->next = array[0];
+
+	free(array);
 }
 

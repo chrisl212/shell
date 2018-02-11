@@ -5,10 +5,12 @@
 #include "sorting.h"
 
 void _free_node(Node *node) {
-	if (node && node->next) {
-		_free_node(node->next);
+	Node *temp = NULL;
+	while (node) {
+		temp = node;
+		node = node->next;
+		free(temp);
 	}
-	free(node);
 }
 
 int main(int argc, char **argv) {
@@ -47,10 +49,24 @@ int main(int argc, char **argv) {
 		return EXIT_SUCCESS;
 	} else if (strcmp(argv[1], "-l") == 0) {
 		double n_cmp = 0.0;
+
+		clock_t io = 0;
+		clock_t sorting = 0;
+		clock_t initial = clock();
+		
 		Node *root = Load_Into_List(argv[2]);
+		io += clock()-initial;
+		
+		initial = clock();
 		Shell_Sort_List(root, &n_cmp);
+		sorting = clock()-initial;
+
+		initial = clock();
 		Save_From_List(argv[3], root);
+		io += clock()-initial;
+		
 		_free_node(root);
+		fprintf(stdout, "I/O time: %le\nSorting time: %le\nNumber of comparisons: %le\n", (double)io, (double)sorting, n_cmp);
 		return EXIT_SUCCESS;
 	}
 
