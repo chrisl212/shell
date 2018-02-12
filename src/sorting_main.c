@@ -4,7 +4,7 @@
 #include <time.h>
 #include "sorting.h"
 
-void _free_node(Node *node) {
+static void _free_node(Node *node) {
 	Node *temp = NULL;
 	while (node) {
 		temp = node;
@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 			return EXIT_FAILURE;
 		}
 
-		fprintf(stdout, "I/O time: %le\nSorting time: %le\nNumber of comparisons: %le\n", (double)io, (double)sorting, n_cmp);
+		fprintf(stdout, "I/O time: %le\nSorting time: %le\nNumber of comparisons: %le\n", (double)io/CLOCKS_PER_SEC, (double)sorting/CLOCKS_PER_SEC, n_cmp);
 		free(array);
 		return EXIT_SUCCESS;
 	} else if (strcmp(argv[1], "-l") == 0) {
@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
 		io += clock()-initial;
 		
 		_free_node(root);
-		fprintf(stdout, "I/O time: %le\nSorting time: %le\nNumber of comparisons: %le\n", (double)io, (double)sorting, n_cmp);
+		fprintf(stdout, "I/O time: %le\nSorting time: %le\nNumber of comparisons: %le\n", (double)io/CLOCKS_PER_SEC, (double)sorting/CLOCKS_PER_SEC, n_cmp);
 		return EXIT_SUCCESS;
 	}
 

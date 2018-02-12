@@ -1,2 +1,2 @@
 all:
-	gcc -g -Wall src/*.c -o proj2
+	gcc -std=c99 -g -Wall -Wshadow -Wvla -pedantic src/*.c -o proj2

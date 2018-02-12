@@ -46,12 +46,12 @@ void Shell_Sort_Array(long *array, int size, double *n_cmp) {
 				array[j] = array[j - gap];
 			}
 
-			array[j] = temp;
+			array[j] = temp; 
 		}
 	}
 }
 
-Node *_node_create(long val) {
+static Node *_node_create(long val) {
 	Node *node = calloc(1, sizeof(*node));
 	node->value = val;
 	return node;
@@ -99,18 +99,6 @@ int Save_From_List(char *filename, Node *list) {
 	fclose(f);
 	return bytes;
 }
-/*
-void _swap(Node **arr, Node *n1, Node *n2) {
-	if (i > 0) {	
-		->next = arr[j];
-	}
-	if (j > 0) {
-		arr[j-1]->next = arr[i];
-	}
-	Node *temp = arr[j]->next;
-	arr[j]->next = arr[i]->next;
-	arr[i]->next = temp;
-}*/
 
 void Shell_Sort_List(Node *list, double *n_cmp) {
 	int max = 1;
@@ -139,7 +127,7 @@ void Shell_Sort_List(Node *list, double *n_cmp) {
 	for (int i = 0; i < size; i++) {
 		if (i+1 == size) {
 			array[i]->next = NULL;
-			continue;
+			break;
 		}
 		array[i]->next = array[i+1];
 	}
