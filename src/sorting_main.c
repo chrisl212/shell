@@ -42,7 +42,6 @@ int main(int argc, char **argv) {
 	} else {
 		//if -l, loads integers into linked list
 		root = Load_Into_List(argv[2]);
-		size = root->value; //gets the size from the value of the first node
 		if (!root) {
 			return EXIT_FAILURE;
 		}

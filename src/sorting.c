@@ -28,21 +28,25 @@ int Save_From_Array(char *filename, long *array, int size) {
 		return EXIT_FAILURE;
 	}
 
-	int bytes = fwrite(array, sizeof(*array), size, f); //write the array
+	int written = fwrite(array, sizeof(*array), size, f); //write the array
 	
 	fclose(f);
-	return bytes;
+	return written;
 }
 
 int *_gen_sequence(int size, int *len) {
 	//generates the sequence using 3*h(i-1)+1
 	int *array = malloc(sizeof(*array)); //allocates the sequence
+	int arr_sz = 1;
 	int i = 0;
 	array[0] = 1; //sets the first term to 1
 	while (3*array[i]+1 < size) {
 		//iterates until the number is greater than the size
-		//reallocates the array every step
-		array = realloc(array, (++i+1)*sizeof(*array));
+		//reallocates the array every time it is necessary
+		if (++i >= arr_sz) {
+			arr_sz *= 2;
+			array = realloc(array, arr_sz*sizeof(*array));
+		}	
 		array[i] = 3*array[i-1]+1;
 	}
 
@@ -64,7 +68,7 @@ void Shell_Sort_Array(long *array, int size, double *n_cmp) {
 				array[i] = array[i-gap]; //moves the value to the sorted array
 				i -= gap;
 			}
-			array[i] = temp; 
+			array[i] = temp;
 		}
 	}
 	free(seq);
