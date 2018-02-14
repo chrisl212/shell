@@ -38,15 +38,15 @@ void Shell_Sort_Array(long *array, int size, double *n_cmp) {
 		max = max*3+1;
 	}
 	for (int gap = max; gap > 0; gap=(gap-1)/3) {
-		for (int i = gap; i < size; i++) {
-			int temp = array[i];
-
-			int j;            
-			for (j = i; j >= gap && array[j - gap] > temp; j -= gap, (*n_cmp)++) {
-				array[j] = array[j - gap];
+		for (int j = gap; j < size; j++) {
+			int temp = array[j];
+			int i = j;
+			while (i >= gap && array[i-gap] > temp) {
+				(*n_cmp)++;
+				array[i] = array[i-gap];
+				i -= gap;
 			}
-
-			array[j] = temp; 
+			array[i] = temp;
 		}
 	}
 }
@@ -100,6 +100,21 @@ int Save_From_List(char *filename, Node *list) {
 	return bytes;
 }
 
+void _swap(Node **array, int i, int j) { 
+	if (i > 0) {
+		array[i-1]->next = array[j];
+	}
+	if (j > 0) {
+		array[j-1]->next = array[i];
+	}
+	Node *temp = array[i]->next;
+	array[i]->next = array[j]->next;
+	array[j]->next = temp;
+	temp = array[i];
+	array[i] = array[j];
+	array[j] = temp;
+}
+
 void Shell_Sort_List(Node *list, double *n_cmp) {
 	int max = 1;
 	int size = list->value;
@@ -113,23 +128,17 @@ void Shell_Sort_List(Node *list, double *n_cmp) {
 		max = max*3+1;
 	}
 	for (int gap = max; gap > 0; gap=(gap-1)/3) {
-		for (int i = gap; i < size; i++) {
-			Node *temp = array[i];
-
-			int j;            
-			for (j = i; j >= gap && array[j - gap]->value > temp->value; j -= gap, (*n_cmp)++) {
-				array[j] = array[j - gap];
+		for (int j = gap; j < size; j++) {
+			for (int i = j; i >= gap; i-=gap) {
+				(*n_cmp)++;
+				if (array[i-gap]->value > array[i]->value) {
+					_swap(array, i-gap, i);
+				}
+				else {
+					break;
+				}
 			}
-
-			array[j] = temp;
 		}
-	}
-	for (int i = 0; i < size; i++) {
-		if (i+1 == size) {
-			array[i]->next = NULL;
-			break;
-		}
-		array[i]->next = array[i+1];
 	}
 	list->next = array[0];
 
