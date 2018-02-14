@@ -16,7 +16,7 @@ int Save_From_Array(char *filename, long *array, int size);
 void Shell_Sort_Array(long *array, int size, double *n_cmp);
 Node *Load_Into_List(char *filename);
 int Save_From_List(char *filename, Node *list);
-void Shell_Sort_List(Node *list, double *n_cmp);
+Node *Shell_Sort_List(Node *list, double *n_cmp);
 
 #endif
 

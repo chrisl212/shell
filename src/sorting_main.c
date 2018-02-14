@@ -55,6 +55,9 @@ int main(int argc, char **argv) {
 		clock_t initial = clock();
 		
 		Node *root = Load_Into_List(argv[2]);
+		if (!root) {
+			return EXIT_FAILURE;
+		}
 		io += clock()-initial;
 		
 		initial = clock();
