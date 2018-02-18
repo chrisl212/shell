@@ -96,7 +96,7 @@ Node *Load_Into_List(char *filename) {
 	long *array = malloc(size*sizeof(*array)); //allocates the array
 	fread(array, sizeof(*array), size, f); //reads in the numbers
 
-	Node *root = _node_create(size); //the first node is a dummy that contains the size of the array
+	Node *root = _node_create(size); 
 	Node *temp = root;
 	for (int i = 0; i < size; i++) {
 		//creates a node for each integer 
@@ -109,6 +109,121 @@ Node *Load_Into_List(char *filename) {
 	return root;
 }
 
+void _node_push(Node **addr, Node *n) {
+	Node *list = *addr; //fetches the list from the address
+	if (!list) {
+		//if the list doesn't exist, create it 
+		*addr = n;
+		return;
+	}
+	if (!list->next) {
+		//if there is only one node, set the next to n
+		list->next = n;
+		return;
+	}
+	while (list->next->next) {
+		//loop through until at penultimate node
+		list = list->next;
+	}
+	list->next->next = n; //set last node to n
+}
+
+void _node_enqueue(Node **addr, Node *n, double *n_cmp) {
+	Node *list = *addr; //fetches list from the address
+	if (!list) {
+		//if the list doens't exists creates it
+		*addr = n;
+		return;
+	}
+	if (n->value < list->value) {
+		//if the value is smaller than the first sets it to the first
+		if (n_cmp) {
+			(*n_cmp)++;
+		}
+		*addr = n;
+		n->next = list;
+	} else if (!list->next) {
+		//if there is only one node sets n to the next one
+		list->next = n;
+		(*n_cmp)++;
+	} else {
+		while (list->next && n->value > list->next->value) {
+			//loops through the list until at end or n is smaller than the next node
+			if (n_cmp) {
+				(*n_cmp)++;
+			}
+			list = list->next;
+		}
+		(*n_cmp) += 2; //increments counter by two due to comparisons in while and if that are unaccounted for
+		Node *temp = list->next;
+		list->next = n; //inserts n in the list
+		n->next = temp;
+	}
+}
+
+Node *_node_dequeue(Node **nums) {
+	if (!*nums) {
+		return NULL;
+	}
+	Node *temp = *nums; //dequeues the first node from the list
+	*nums = (*nums)->next;
+	temp->next = NULL;
+	return temp;
+}
+
+Node *Shell_Sort_List(Node *nums, double *n_cmp) {
+	long size = nums->value; //fetches the number of numbers
+	Node *sz_n = nums;
+	nums = nums->next;
+	int len = 0; 
+	int *seq = _gen_sequence(size, &len); //generates the sequence that will be used for shell sort
+	for (int a = len; a >= 0; a--) {
+		int gap = seq[a]; //fetches the k value
+		List *lists = calloc(1, sizeof(*lists)); //a list of linked lists
+		for (int i = 0; i < gap; i++) {
+			List *temp = lists;
+			//fills out the list of linked lists
+			while (temp->next) {
+				temp=temp->next;
+			}
+			temp->next = calloc(1, sizeof(*temp));
+		}
+		List *temp = lists; 
+		for (int i = 0; i < size; i++) {
+			if (!temp) {
+				temp = lists;
+			}
+			Node *n = _node_dequeue(&nums); //dequeues a node from the number list
+			if (!lists->node) {
+				//if the list is empty, set the first item to n
+				lists->node = n;
+			} else {
+				//enqueues a node into the sorted sublist
+				_node_enqueue(&(lists->node), n, n_cmp);
+			}
+			temp = temp->next;
+		}
+		temp = lists;
+		for (int i = 0; i < size; i++) {
+			if (!temp) {
+				temp = lists;
+			}
+			Node *n = _node_dequeue(&(lists->node)); //dequeues the first node of the sublist
+			_node_push(&nums, n); //pushes that node onto the main list
+			temp = temp->next;
+		}
+		while (lists) {
+			temp = lists->next;
+			free(lists);
+			lists = temp;
+		}
+	}
+	sz_n->next = nums; //puts the node containing the size back at the front of the list
+
+	free(seq);
+	return sz_n;
+}
+
 int Save_From_List(char *filename, Node *list) {
 	FILE *f = fopen(filename, "w"); //opens the file for writing 
 	if (!f) {
@@ -117,7 +232,7 @@ int Save_From_List(char *filename, Node *list) {
 	}
 
 	int bytes = 0;
-	list=list->next;
+	list = list->next;
 	while (list) {
 		//writes each integer to the file
 		bytes += fwrite(&(list->value), sizeof(long), 1, f);
@@ -127,58 +242,3 @@ int Save_From_List(char *filename, Node *list) {
 	fclose(f);
 	return bytes;
 }
-
-void _swap(Node **array, int i, int j) {
-	//swaps the nodes at i and j in an array
-	//sets the previous nodes' next values to the correct nodes
-	if (i > 0) {
-		array[i-1]->next = array[j];
-	}
-	if (j > 0) {
-		array[j-1]->next = array[i];
-	}
-	Node *temp = array[i]->next;
-	array[i]->next = array[j]->next; //sets the swapped nodes next values
-	array[j]->next = temp;
-	temp = array[i];
-	array[i] = array[j]; //swaps the pointers
-	array[j] = temp;
-}
-
-Node *Shell_Sort_List(Node *list, double *n_cmp) {
-	int size = list->value; //gets the size of the array from the first node
-	Node *n = list->next;
-	Node **array = malloc(size*sizeof(*array)); //creates an array to hold the nodes
-	for (int i = 0; n != NULL; i++, n=n->next) {
-		//assigns each node to the array
-		array[i] = n;
-	}
-
-	int len = 0; 
-	int *seq = _gen_sequence(size, &len); //generates the shell sort sequence
-	for (int a = len; a >= 0; a--) {
-		int gap = seq[a]; //iterates through each k value in the sequence
-		for (int j = gap; j < size; j++) {
-			//performs insertion sort on each subarray
-			for (int i = j; i >= gap; i-=gap) {
-				(*n_cmp)++;
-				if (array[i-gap]->value > array[i]->value) {
-					//swaps the values
-					_swap(array, i-gap, i);
-				}
-				else {
-					break;
-				}
-			}
-		}
-	}
-	if (size > 0) {
-		list->next = array[0]; //sets the first node of the list to the first element of the array, as it has likely changed
-	}
-
-	free(array);
-	free(seq);
-
-	return list;
-}
-
