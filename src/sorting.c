@@ -109,66 +109,71 @@ Node *Load_Into_List(char *filename) {
 	return root;
 }
 
-void _node_push(Node **addr, Node *n) {
-	Node *list = *addr; //fetches the list from the address
+void _node_enqueue(Node **addr, Node *n) {
+	//appends a node to the end of a list
+	Node *list = *addr;
 	if (!list) {
-		//if the list doesn't exist, create it 
+		//if the list doesn't exist, start it with n
 		*addr = n;
 		return;
 	}
-	if (!list->next) {
-		//if there is only one node, set the next to n
-		list->next = n;
-		return;
-	}
-	while (list->next->next) {
-		//loop through until at penultimate node
+	while (list->next) {
+		//loop through to end of list
 		list = list->next;
 	}
-	list->next->next = n; //set last node to n
+	list->next = n;
+	n->next = NULL;
 }
 
-void _node_enqueue(Node **addr, Node *n, double *n_cmp) {
-	Node *list = *addr; //fetches list from the address
+Node *_node_dequeue(Node **addr) {
+	//dequeues a node from the beginning of a list
+	Node *list = *addr;
 	if (!list) {
-		//if the list doens't exists creates it
-		*addr = n;
-		return;
-	}
-	if (n->value < list->value) {
-		//if the value is smaller than the first sets it to the first
-		if (n_cmp) {
-			(*n_cmp)++;
-		}
-		*addr = n;
-		n->next = list;
-	} else if (!list->next) {
-		//if there is only one node sets n to the next one
-		list->next = n;
-		(*n_cmp)++;
-	} else {
-		while (list->next && n->value > list->next->value) {
-			//loops through the list until at end or n is smaller than the next node
-			if (n_cmp) {
-				(*n_cmp)++;
-			}
-			list = list->next;
-		}
-		(*n_cmp) += 2; //increments counter by two due to comparisons in while and if that are unaccounted for
-		Node *temp = list->next;
-		list->next = n; //inserts n in the list
-		n->next = temp;
-	}
-}
-
-Node *_node_dequeue(Node **nums) {
-	if (!*nums) {
+		//if the list doesn't exist, stop
 		return NULL;
 	}
-	Node *temp = *nums; //dequeues the first node from the list
-	*nums = (*nums)->next;
-	temp->next = NULL;
-	return temp;
+	*addr = list->next;
+	list->next = NULL;
+	return list;
+}
+
+void _sort_list(List *lists, double *n_cmp) {
+	//sorts each sublist using insertion sort
+	while (lists) {
+		Node *list = lists->node; 
+		if (!list || !list->next) {
+			//empty or one element list
+			lists = lists->next;
+			continue;
+		}
+
+		Node *head = NULL; //the sorted list
+		while (list != NULL) {
+			Node *current = list; //sets the current element to the first in the array
+			list = list->next;
+			if (!head || current->value < head->value) {
+				//if the sorted list is empty or the current value is less than the first, replace the first value in the list
+				(*n_cmp)++;
+				current->next = head;
+				head = current;
+			} else {
+				Node *p = head; //previous element
+				while (p) {
+					if (!p->next || current->value < p->next->value) {
+						//checks if the next value is less than the key
+						(*n_cmp)++;
+						current->next = p->next;
+						p->next = current;
+						break;
+					}
+					(*n_cmp)++;
+					p = p->next; //moves the previous element forward
+				}
+			}
+		}
+		lists->node = head; //sets the sublist to the sorted version
+		lists = lists->next;
+	}
 }
 
 Node *Shell_Sort_List(Node *nums, double *n_cmp) {
@@ -177,47 +182,57 @@ Node *Shell_Sort_List(Node *nums, double *n_cmp) {
 	nums = nums->next;
 	int len = 0; 
 	int *seq = _gen_sequence(size, &len); //generates the sequence that will be used for shell sort
+	List *lists = NULL;
+	List *temp = lists;
 	for (int a = len; a >= 0; a--) {
-		int gap = seq[a]; //fetches the k value
-		List *lists = calloc(1, sizeof(*lists)); //a list of linked lists
-		for (int i = 0; i < gap; i++) {
-			List *temp = lists;
-			//fills out the list of linked lists
-			while (temp->next) {
-				temp=temp->next;
+		int k = seq[a]; //fetches the k value
+		if (!lists) {
+			lists = calloc(1, sizeof(*lists));
+			temp = lists;
+			for (int i = 1; i < k; i++) {
+				//Creates a list of k linked lists, where k is from the sequence
+				temp->next = calloc(1, sizeof(*temp));
+				temp = temp->next;
 			}
-			temp->next = calloc(1, sizeof(*temp));
 		}
-		List *temp = lists; 
-		for (int i = 0; i < size; i++) {
-			if (!temp) {
-				temp = lists;
-			}
-			Node *n = _node_dequeue(&nums); //dequeues a node from the number list
-			if (!lists->node) {
-				//if the list is empty, set the first item to n
-				lists->node = n;
-			} else {
-				//enqueues a node into the sorted sublist
-				_node_enqueue(&(lists->node), n, n_cmp);
-			}
+		temp = lists;
+		for (int i = 1; i < k; i++) {
 			temp = temp->next;
+		}
+		List *remnant = temp->next; //only frees the linked lists when the k value decreases, rather than freeing them at the end of each subsort
+		if (remnant) {
+			//loops through and frees the unneeded lists
+			temp->next = NULL;
+			while (remnant) {
+				List *t = remnant->next;
+				free(remnant);
+				remnant = t;
+			}
 		}
 		temp = lists;
 		for (int i = 0; i < size; i++) {
+			//goes through the list and fills out the k sublists
 			if (!temp) {
 				temp = lists;
 			}
-			Node *n = _node_dequeue(&(lists->node)); //dequeues the first node of the sublist
-			_node_push(&nums, n); //pushes that node onto the main list
+			Node *n = _node_dequeue(&nums); //dequeues from main lists
+			_node_enqueue(&(temp->node), n); //enqueues into sublist
+			temp = temp->next;
+			n = n->next;
+		}
+		_sort_list(lists, n_cmp); //sorts each list using insertion sort
+		temp = lists;
+		for (int i = 0; i < size; i++) {
+			//goes through the sublists, dequeues each element, and enqueues it back into the main list
+			if (!temp) {
+				temp = lists;
+			}
+			Node *n = _node_dequeue(&(temp->node)); //dequeues from sublist
+			_node_enqueue(&nums, n); //enqueues into main list
 			temp = temp->next;
 		}
-		while (lists) {
-			temp = lists->next;
-			free(lists);
-			lists = temp;
-		}
 	}
+	free(lists); //frees the last list
 	sz_n->next = nums; //puts the node containing the size back at the front of the list
 
 	free(seq);
